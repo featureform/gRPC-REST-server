@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/Sami1309/go-grpc-server/middleware"
 	"github.com/Sami1309/go-grpc-server/router"
 )
@@ -14,9 +11,7 @@ func main() {
 
 	middleware.ConnectGRPC()
 
-	os.Setenv("PORT", "8080")
+	//myport := fmt.Sprintf(":%s", os.Getenv("PORT"))
 
-	myport := fmt.Sprintf(":%s", os.Getenv("PORT"))
-
-	r.Run(myport)
+	r.Run(":8080")
 }

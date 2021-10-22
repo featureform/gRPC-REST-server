@@ -14,13 +14,13 @@ func Router() *gin.Engine {
 	router.GET("/spaces", middleware.GetSpaces)
 
 	//Retrieve information about individual space
-	router.GET("/spaces/:name/metadata", middleware.GetSpaceVectors)
+	router.GET("/spaces/:name", middleware.GetEmbeddings)
 
 	//Get specific embedding
-	//router.GET("/spaces/:name/:key", middleware.GetEmbedding)
+	router.GET("/spaces/:name/:key", middleware.GetEmbedding)
 
 	//Get nearest neighbors for embedding
-	router.GET("/spaces/:name/:key/nn/:num", middleware.GetNearestNeighbors)
+	router.GET("/spaces/:name/:key/*nn", middleware.GetNearestNeighbors)
 
 	return router
 
