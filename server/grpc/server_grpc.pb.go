@@ -26,7 +26,7 @@ type EmbeddingHubClient interface {
 	MultiGet(ctx context.Context, opts ...grpc.CallOption) (EmbeddingHub_MultiGetClient, error)
 	NearestNeighbor(ctx context.Context, in *NearestNeighborRequest, opts ...grpc.CallOption) (*NearestNeighborResponse, error)
 	Download(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (EmbeddingHub_DownloadClient, error)
-	DownloadSpaces(ctx context.Context, in *DownloadSpacesRequest, opts ...grpc.CallOption) (EmbeddingHub_DownloadSpacesClient, error)
+	ListEntries(ctx context.Context, in *ListEntriesRequest, opts ...grpc.CallOption) (EmbeddingHub_ListEntriesClient, error)
 }
 
 type embeddingHubClient struct {
@@ -179,12 +179,12 @@ func (x *embeddingHubDownloadClient) Recv() (*DownloadResponse, error) {
 	return m, nil
 }
 
-func (c *embeddingHubClient) DownloadSpaces(ctx context.Context, in *DownloadSpacesRequest, opts ...grpc.CallOption) (EmbeddingHub_DownloadSpacesClient, error) {
-	stream, err := c.cc.NewStream(ctx, &EmbeddingHub_ServiceDesc.Streams[3], "/featureform.embedding.proto.EmbeddingHub/DownloadSpaces", opts...)
+func (c *embeddingHubClient) ListEntries(ctx context.Context, in *ListEntriesRequest, opts ...grpc.CallOption) (EmbeddingHub_ListEntriesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &EmbeddingHub_ServiceDesc.Streams[3], "/featureform.embedding.proto.EmbeddingHub/ListEntries", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &embeddingHubDownloadSpacesClient{stream}
+	x := &embeddingHubListEntriesClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -194,17 +194,17 @@ func (c *embeddingHubClient) DownloadSpaces(ctx context.Context, in *DownloadSpa
 	return x, nil
 }
 
-type EmbeddingHub_DownloadSpacesClient interface {
-	Recv() (*DownloadSpacesResponse, error)
+type EmbeddingHub_ListEntriesClient interface {
+	Recv() (*ListEntriesResponse, error)
 	grpc.ClientStream
 }
 
-type embeddingHubDownloadSpacesClient struct {
+type embeddingHubListEntriesClient struct {
 	grpc.ClientStream
 }
 
-func (x *embeddingHubDownloadSpacesClient) Recv() (*DownloadSpacesResponse, error) {
-	m := new(DownloadSpacesResponse)
+func (x *embeddingHubListEntriesClient) Recv() (*ListEntriesResponse, error) {
+	m := new(ListEntriesResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -223,7 +223,7 @@ type EmbeddingHubServer interface {
 	MultiGet(EmbeddingHub_MultiGetServer) error
 	NearestNeighbor(context.Context, *NearestNeighborRequest) (*NearestNeighborResponse, error)
 	Download(*DownloadRequest, EmbeddingHub_DownloadServer) error
-	DownloadSpaces(*DownloadSpacesRequest, EmbeddingHub_DownloadSpacesServer) error
+	ListEntries(*ListEntriesRequest, EmbeddingHub_ListEntriesServer) error
 	mustEmbedUnimplementedEmbeddingHubServer()
 }
 
@@ -255,8 +255,8 @@ func (UnimplementedEmbeddingHubServer) NearestNeighbor(context.Context, *Nearest
 func (UnimplementedEmbeddingHubServer) Download(*DownloadRequest, EmbeddingHub_DownloadServer) error {
 	return status.Errorf(codes.Unimplemented, "method Download not implemented")
 }
-func (UnimplementedEmbeddingHubServer) DownloadSpaces(*DownloadSpacesRequest, EmbeddingHub_DownloadSpacesServer) error {
-	return status.Errorf(codes.Unimplemented, "method DownloadSpaces not implemented")
+func (UnimplementedEmbeddingHubServer) ListEntries(*ListEntriesRequest, EmbeddingHub_ListEntriesServer) error {
+	return status.Errorf(codes.Unimplemented, "method ListEntries not implemented")
 }
 func (UnimplementedEmbeddingHubServer) mustEmbedUnimplementedEmbeddingHubServer() {}
 
@@ -434,24 +434,24 @@ func (x *embeddingHubDownloadServer) Send(m *DownloadResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _EmbeddingHub_DownloadSpaces_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(DownloadSpacesRequest)
+func _EmbeddingHub_ListEntries_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ListEntriesRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(EmbeddingHubServer).DownloadSpaces(m, &embeddingHubDownloadSpacesServer{stream})
+	return srv.(EmbeddingHubServer).ListEntries(m, &embeddingHubListEntriesServer{stream})
 }
 
-type EmbeddingHub_DownloadSpacesServer interface {
-	Send(*DownloadSpacesResponse) error
+type EmbeddingHub_ListEntriesServer interface {
+	Send(*ListEntriesResponse) error
 	grpc.ServerStream
 }
 
-type embeddingHubDownloadSpacesServer struct {
+type embeddingHubListEntriesServer struct {
 	grpc.ServerStream
 }
 
-func (x *embeddingHubDownloadSpacesServer) Send(m *DownloadSpacesResponse) error {
+func (x *embeddingHubListEntriesServer) Send(m *ListEntriesResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -501,8 +501,8 @@ var EmbeddingHub_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 		{
-			StreamName:    "DownloadSpaces",
-			Handler:       _EmbeddingHub_DownloadSpaces_Handler,
+			StreamName:    "ListEntries",
+			Handler:       _EmbeddingHub_ListEntries_Handler,
 			ServerStreams: true,
 		},
 	},

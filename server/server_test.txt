@@ -132,3 +132,250 @@
 // 	log.Printf("finished")
 
 // }
+
+
+
+//API: router.GET("/spaces", middleware.GetSpaces)
+// func GetSpaces(c *gin.Context) {
+// 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+// 	if err != nil {
+// 		log.Fatalf("did not connect: %v", err)
+// 	}
+
+// 	CLIENT := pb.NewEmbeddingHubClient(conn)
+
+// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+// 	defer cancel()
+// 	stream, getSpacesError := CLIENT.DownloadSpaces(ctx, &pb.DownloadSpacesRequest{})
+// 	if getSpacesError != nil {
+// 		log.Fatalf("Error message: ( %v)", getSpacesError)
+// 	}
+
+// 	var space_list []string
+
+// 	done := make(chan bool)
+
+// 	go func() {
+// 		for {
+// 			resp, err := stream.Recv()
+// 			if err == io.EOF {
+// 				done <- true //means stream is finished
+// 				return
+// 			}
+// 			if err != nil {
+// 				log.Fatalf("cannot receive %v", err)
+// 			}
+// 			space_list = append(space_list, resp.GetSpace())
+// 			log.Printf("Space received: %s", resp.GetSpace())
+// 		}
+// 	}()
+
+// 	<-done //we will wait until all response is received
+// 	log.Printf("finished")
+// 	c.JSON(http.StatusOK, gin.H{"Spaces": space_list})
+// }
+
+//main metadata component fetch. Fetches all metadata from every space/version
+func GetListEntriesAll(c *gin.Context) {
+	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+
+	CLIENT := pb.NewEmbeddingHubClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	stream, listEntriesError := CLIENT.ListEntries(ctx, &pb.ListEntriesRequest{})
+	if listEntriesError != nil {
+		log.Fatalf("Error message: ( %v)", listEntriesError)
+	}
+
+	var entries_list []*pb.ListEntriesResponse
+
+	done := make(chan bool)
+
+	go func() {
+		for {
+			resp, err := stream.Recv()
+			if err == io.EOF {
+				done <- true //means stream is finished
+				return
+			}
+			if err != nil {
+				log.Fatalf("cannot receive %v", err)
+			}
+			entries_list = append(entries_list, resp)
+			log.Printf("List entry received: %s", resp.String())
+		}
+	}()
+
+	<-done
+	log.Printf("finished fetching entries")
+	// var entries []listed_space
+	// for i, e := range entries_list {
+	// 	s := new(listed_space)
+	// 	s.Name = e.GetName()
+	// 	s.DefaultVersion = e.GetDefaultVersion()
+	// 	s.Type = "Space"
+	// 	version_list = e.GetVersionEntry()
+	// 	vMap := make(map[string]metadata)
+	// 	var versions []string
+
+	// 	for j, v := range version_list {
+	// 		m := new(metadata)
+	// 		m.VersionName = v.GetName()
+	// 		m.Dimensions = v.GetDims()
+	// 		m.Created = v.GetCreated()
+	// 		m.Owner = v.GetOwner()
+	// 		m.Visibility = "private"
+	// 		m.Revision = v.GetRevision()
+	// 		m.Tags = v.GetTags()
+	// 		m.Description = v.GetDescription()
+	// 		vMap[v.GetName()] = *m
+	// 		versions = append(versions, v.GetName())
+
+	// 	}
+	// 	s.Versions = vMap
+	// 	s.AllVersions = versions
+	// 	entries = append(entries, s)
+
+	// }
+
+	// c.JSON(http.StatusOK, entries)
+
+}
+
+// func GetSpacesAll(c *gin.Context) {
+// 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+// 	if err != nil {
+// 		log.Fatalf("did not connect: %v", err)
+// 	}
+
+// 	CLIENT := pb.NewEmbeddingHubClient(conn)
+
+// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+// 	defer cancel()
+// 	stream, getSpacesError := CLIENT.DownloadSpaces(ctx, &pb.DownloadSpacesRequest{})
+// 	if getSpacesError != nil {
+// 		log.Fatalf("Error message: ( %v)", getSpacesError)
+// 	}
+
+// 	var space_list []string
+
+// 	done := make(chan bool)
+
+// 	go func() {
+// 		for {
+// 			resp, err := stream.Recv()
+// 			if err == io.EOF {
+// 				done <- true //means stream is finished
+// 				return
+// 			}
+// 			if err != nil {
+// 				log.Fatalf("cannot receive %v", err)
+// 			}
+// 			space_list = append(space_list, resp.GetSpace())
+// 			log.Printf("Space received: %s", resp.GetSpace())
+// 		}
+// 	}()
+
+// 	<-done //we will wait until all response is received
+
+// 	//here we have the space list
+// 	//space_list
+
+// 	//for space in space list
+// 	//create object
+// 	//get versions
+// 	//for each version, get version entry and put in object
+// 	//return everything
+// 	// for i, s := range space_list {
+// 	// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+// 	// 	defer cancel()
+// 	// 	versionStream,
+// 	// }
+// 	log.Printf("finished")
+// 	c.JSON(http.StatusOK, gin.H{"Spaces": space_list})
+
+// 	mySpace := new(listed_space)
+// 	mySpace.Name = "User sample preferences"
+// 	mySpace.DefaultVersion = "first-version"
+// 	mySpace.Type = "Space"
+// 	mySpace.AllVersions = []string{"first-version", "normalized version"}
+
+// 	fvMetadata := new(metadata)
+
+// 	nvMetadata := new(metadata)
+// 	fvMetadata.VersionName = "first-version"
+// 	fvMetadata.Dimensions = 3
+// 	fvMetadata.Created = "2020-08-09-0290499"
+// 	fvMetadata.Owner = "Sam Inloes"
+// 	fvMetadata.Visibility = "private"
+// 	fvMetadata.Revision = "2020-08-10-39402409"
+// 	fvMetadata.Tags = []string{"model2vec", "compressed"}
+// 	fvMetadata.Description = "Vector generated based on user preferences"
+
+// 	nvMetadata.VersionName = "first-version"
+// 	nvMetadata.Dimensions = 3
+// 	nvMetadata.Created = "2020-08-09-0290499"
+// 	nvMetadata.Owner = "Sam Inloes"
+// 	nvMetadata.Visibility = "private"
+// 	nvMetadata.Revision = "2020-08-10-39402409"
+// 	nvMetadata.Tags = []string{"model2vec", "compressed"}
+// 	nvMetadata.Description = "Vector generated based on user preferences, normalized"
+
+// 	vMap := make(map[string]metadata)
+// 	vMap["first-version"] = *fvMetadata
+// 	vMap["normalized version"] = *nvMetadata
+
+// 	mySpace.Versions = vMap
+
+// 	spaceList := []listed_space{*mySpace}
+
+// 	c.JSON(http.StatusOK, spaceList)
+// }
+// func GetSpacesMetadata(c *gin.Context) {
+
+// 	mySpace := new(space)
+// 	mySpace.Name = "User sample preferences"
+// 	mySpace.DefaultVersion = "first-version"
+// 	mySpace.Type = "Space"
+// 	mySpace.AllVersions = []string{"first-version", "normalized version"}
+
+// 	firstVersion := new(version)
+// 	normalizedVersion := new(version)
+// 	fvMetadata := new(metadata)
+// 	fvData := new(data)
+// 	nvMetadata := new(metadata)
+// 	nvData := new(data)
+// 	fvMetadata.VersionName = "first-version"
+// 	fvMetadata.Dimensions = 3
+// 	fvMetadata.Created = "2020-08-09-0290499"
+// 	fvMetadata.Owner = "Sam Inloes"
+// 	fvMetadata.Visibility = "private"
+// 	fvMetadata.Revision = "2020-08-10-39402409"
+// 	fvMetadata.Tags = []string{"model2vec", "compressed"}
+// 	fvMetadata.Description = "Vector generated based on user preferences"
+// 	firstVersion.Metadata = *fvMetadata
+// 	firstVersion.Data = *fvData
+
+// 	nvMetadata.VersionName = "first-version"
+// 	nvMetadata.Dimensions = 3
+// 	nvMetadata.Created = "2020-08-09-0290499"
+// 	nvMetadata.Owner = "Sam Inloes"
+// 	nvMetadata.Visibility = "private"
+// 	nvMetadata.Revision = "2020-08-10-39402409"
+// 	nvMetadata.Tags = []string{"model2vec", "compressed"}
+// 	nvMetadata.Description = "Vector generated based on user preferences, normalized"
+// 	normalizedVersion.Metadata = *nvMetadata
+// 	normalizedVersion.Data = *nvData
+
+// 	vMap := make(map[string]version)
+// 	vMap["first-version"] = *firstVersion
+// 	vMap["normalized version"] = *normalizedVersion
+
+// 	mySpace.Versions = vMap
+
+// 	c.JSON(http.StatusOK, mySpace)
+// }
