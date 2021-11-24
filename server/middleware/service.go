@@ -53,7 +53,7 @@ type listed_space struct {
 
 var getEmbeddingCounter = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
-		Name: "http_get_embeddings", // metric name
+		Name: "http_get_embeddings_count", // metric name
 		Help: "Number of embeddings get requests.",
 	},
 	[]string{"space","key","status"}, // labels
@@ -68,9 +68,29 @@ var getEmbeddingLatency = prometheus.NewHistogramVec(
 	[]string{"space","key","status"}, //labels
 )
 
+var getNearestNeighborCounter = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "http_get_nearest_neighbor_count", // metric name
+		Help: "Number of Nearest Neighbor get requests.",
+	},
+	[]string{"space","key","status","num"}, // labels
+)
+
+var getNearestNeighborLatency = prometheus.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Name:    "http_get_nearest_neighbor_duration_seconds",
+		Help:    "Latency of Nearest Neighbor get requests.",
+		Buckets: prometheus.LinearBuckets(0.01, 0.05, 10),
+	},
+	[]string{"space","key","status","num"}, //labels
+)
+
 func init() {
 	prometheus.MustRegister(getEmbeddingCounter)
 	prometheus.MustRegister(getEmbeddingLatency)
+	prometheus.MustRegister(getNearestNeighborCounter)
+	prometheus.MustRegister(getNearestNeighborLatency)
+
 }
 
 func PrometheusHandler() gin.HandlerFunc {
@@ -170,28 +190,46 @@ func GetEmbeddings(c *gin.Context) {
 
 //API: router.GET("/spaces/:name/:key/*nn?num=<num_value>", middleware.GetNearestNeighbors)
 func GetNearestNeighbors(c *gin.Context) {
+	var key string
+	var name string
+	var num int64
+
+	status := "error"
+	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+		getNearestNeighborLatency.WithLabelValues(name,key,status,num).Observe(v)
+	}))
+	defer func() {
+		//record count and latency metrics upon function exit
+		getNearestNeighborCounter.WithLabelValues(name,key,status,num).Inc()
+		timer.ObserveDuration()
+	}()
+
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		c.JSON(500, gin.H{"Error": "Could not connect to grpc"})
+		return
 	}
 
 	CLIENT := pb.NewEmbeddingHubClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	name := c.Param("name")
-	key := c.Param("key")
-	num, err := strconv.ParseInt(c.Query("num"), 10, 64)
+	name = c.Param("name")
+	key = c.Param("key")
+	num, err = strconv.ParseInt(c.Query("num"), 10, 64)
 	if err != nil {
-		log.Fatalf("improper number format: %v", err)
+		c.JSON(500, gin.H{"Error": "Could not connect to grpc"})
+		return
 	}
 	getResponse, getResponseErr := CLIENT.NearestNeighbor(ctx, &pb.NearestNeighborRequest{Key: key, Space: name, Num: int32(num), Embedding: nil})
 
-	if getResponseErr != nil {
-		log.Fatalf("Error message: ( %v)", getResponseErr)
+	if err != nil {
+		c.JSON(500, gin.H{"Error": "Could not connect to grpc"})
+		return
 	}
 
 	log.Printf("Nearest neighbors: %s", getResponse.GetKeys())
+	status = "success"
 	c.JSON(http.StatusOK, gin.H{"Nearest neighbors": getResponse.GetKeys()})
 
 }
