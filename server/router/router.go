@@ -13,22 +13,14 @@ func Router() *gin.Engine {
 	router := gin.Default()
 	router.Use(cors.Default())
 
-	//Retrieve list of spaces in embeddingstore (rpc ListEntries)
-	//router.GET("/spaces", middleware.GetListEntriesAll)
+	//Retrieve list of all avaliable data types
+	router.GET("/list", middleware.GetTypes)
 
-	//Retrieve all metadata from all spaces
-	//router.GET("/spaces/*metadata", middleware.GetSpacesMetadata)
+	//Retrieve list of all of a specific data type (feature, label, training set, etc)
+	router.GET("/:type", middleware.GetType)
 
-	//Retrieve information about individual space (rpc GetSpaceEntry)
-	//router.GET("/spaces/:name/*metadata", middleware.GetSpaceMetadata)
-
-	//router.GET("/spaces/:name", middleware.GetEmbeddings)
-
-	//Get specific embedding (rpc Get)
-	router.GET("/spaces/:name/:key", middleware.GetEmbedding)
-
-	//Get nearest neighbors for embedding (rpc NearestNeighbor)
-	router.GET("/spaces/:name/:key/*nn", middleware.GetNearestNeighbors)
+	//Retrieve all versions of metadata for specific object
+	router.GET("/:type/:name", middleware.GetObject)
 
 	//Get metrics for service
 	router.GET("/metrics", middleware.PrometheusHandler())

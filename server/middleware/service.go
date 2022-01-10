@@ -82,6 +82,124 @@ func PrometheusHandler() gin.HandlerFunc {
 }
 
 
+
+
+//Retrieve list of all avaliable data types
+// router.GET("/list", middleware.GetTypes)
+//RETURNS json list of named types
+func GetTypes(c *gin.Context) {
+	var type_name string
+	var name string
+	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		c.JSON(500, gin.H{"Error": "Could not connect to grpc"})
+		return
+	}
+
+	client := pb.NewEmbeddingHubClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	type_name = c.Param("type")
+	name = c.Param("name")
+
+	type_struct, err := GetTypeStruct(type)
+	if err != nil {
+		c.JSON(400, gin.H{"Error:": "Invalid Type"})
+	}
+
+	getResponse, getResponseErr := client.Get(ctx, &pb.GetRequest{Type: type, Name: name})
+	if getResponseErr != nil {
+		c.JSON(500, gin.H{"Error": "Problem fetching object metadata"})
+		return
+	}
+
+	type_json, err := ConvertTypeStruct(type_name, getResponse.GetMetadata())
+	if err != nil {
+		c.JSON(500, gin.H{"Error": "Problem with metadata structure"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"Metadata": getResponse.GetMetadata()})
+}
+
+//Retrieve list of all of a specific data type (feature, label, training set, etc)
+// router.GET("/:type", middleware.GetType)
+//RETURNS json list of data by given type
+func GetType(c *gin.Context) {
+	var type_name string
+	var name string
+	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		c.JSON(500, gin.H{"Error": "Could not connect to grpc"})
+		return
+	}
+
+	client := pb.NewEmbeddingHubClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	type_name = c.Param("type")
+	name = c.Param("name")
+
+	type_struct, err := GetTypeStruct(type)
+	if err != nil {
+		c.JSON(400, gin.H{"Error:": "Invalid Type"})
+	}
+
+	getResponse, getResponseErr := client.Get(ctx, &pb.GetRequest{Type: type, Name: name})
+	if getResponseErr != nil {
+		c.JSON(500, gin.H{"Error": "Problem fetching object metadata"})
+		return
+	}
+
+	type_json, err := ConvertTypeStruct(type_name, getResponse.GetMetadata())
+	if err != nil {
+		c.JSON(500, gin.H{"Error": "Problem with metadata structure"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"Metadata": getResponse.GetMetadata()})
+}
+
+//Retrieve all versions of metadata for specific object
+// router.GET("/:type/:name", middleware.GetObject)
+func GetObject(c *gin.Context) {
+	var type_name string
+	var name string
+	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		c.JSON(500, gin.H{"Error": "Could not connect to grpc"})
+		return
+	}
+
+	client := pb.NewEmbeddingHubClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	type_name = c.Param("type")
+	name = c.Param("name")
+
+	type_struct, err := GetTypeStruct(type)
+	if err != nil {
+		c.JSON(400, gin.H{"Error:": "Invalid Type"})
+	}
+
+	getResponse, getResponseErr := client.Get(ctx, &pb.GetRequest{Type: type, Name: name})
+	if getResponseErr != nil {
+		c.JSON(500, gin.H{"Error": "Problem fetching object metadata"})
+		return
+	}
+
+	type_json, err := ConvertTypeStruct(type_name, getResponse.GetMetadata())
+	if err != nil {
+		c.JSON(500, gin.H{"Error": "Problem with metadata structure"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"Metadata": getResponse.GetMetadata()})
+}
+
 //API: router.GET("/spaces/:name/:key", middleware.GetEmbedding)
 func GetEmbedding(c *gin.Context) {
 
@@ -168,30 +286,3 @@ func GetEmbeddings(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"Embeddings": embedding_list})
 }
 
-//API: router.GET("/spaces/:name/:key/*nn?num=<num_value>", middleware.GetNearestNeighbors)
-func GetNearestNeighbors(c *gin.Context) {
-	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
-
-	CLIENT := pb.NewEmbeddingHubClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	name := c.Param("name")
-	key := c.Param("key")
-	num, err := strconv.ParseInt(c.Query("num"), 10, 64)
-	if err != nil {
-		log.Fatalf("improper number format: %v", err)
-	}
-	getResponse, getResponseErr := CLIENT.NearestNeighbor(ctx, &pb.NearestNeighborRequest{Key: key, Space: name, Num: int32(num), Embedding: nil})
-
-	if getResponseErr != nil {
-		log.Fatalf("Error message: ( %v)", getResponseErr)
-	}
-
-	log.Printf("Nearest neighbors: %s", getResponse.GetKeys())
-	c.JSON(http.StatusOK, gin.H{"Nearest neighbors": getResponse.GetKeys()})
-
-}
